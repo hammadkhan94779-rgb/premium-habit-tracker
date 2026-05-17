@@ -1,418 +1,529 @@
-                                 <!--
-PREMIUM HABIT TRACKER
-FULL ADVANCED VERSION
-Includes:
-- Premium SaaS Dashboard
-- Analytics
-- Streak System
-- Pomodoro Timer
-- Achievements
-- Glassmorphism UI
-- Animated Sections
-- LocalStorage Persistence
-- Dark/Light Theme
-- Responsive Design
--->
-<!DOCTYPE html>
-<html lang="en" class="dark">
+            <!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Premium Habit Tracker</title>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Premium Habit Tracker | Build Better Habits</title>
+  <!-- Tailwind + Google Fonts + Font Awesome -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            premium: '#10B981',
-            darkbg: '#121212',
-            card: '#1E1E1E'
-          }
-        }
-      }
-    }
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Chart.js + Recharts (via CDN for simplicity) - but we'll use chart.js for demo -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Framer Motion via ESM (React) -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.js"></script>
+  <!-- For local storage persistence and hooks we'll rely on pure React -->
   <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
     body {
-      background: #121212;
-      color: white;
-      font-family: Arial, sans-serif;
-      overflow-x: hidden;
+      background-color: #121212;
+      scroll-behavior: smooth;
     }
-
-    .glass {
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.08);
+    /* Custom glassmorphism, glow effects, scrollbar */
+    .glass-card {
+      background: rgba(30, 30, 30, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.05);
     }
-
-    .habit-card:hover {
-      transform: translateY(-4px);
-      transition: 0.3s ease;
+    .glow-green {
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1E1E1E;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #10B981;
+      border-radius: 10px;
+    }
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.35s;
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    input, select, textarea {
+      transition: all 0.2s ease;
     }
   </style>
-</head>
-<body>
-
-<div id="root"></div>
-
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-<script type="text/babel">
-
-const { useState, useEffect } = React;
-
-function App() {
-
-  // =========================
-  // STATES
-  // =========================
-
-  const [habitInput, setHabitInput] = useState('');
-  const [darkMode, setDarkMode] = useState(true);
-  const [quoteIndex, setQuoteIndex] = useState(0);
-  const [focusTime, setFocusTime] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [sessionCount, setSessionCount] = useState(0);
-
-  const quotes = [
-    'Discipline creates freedom.',
-    'Small habits create big results.',
-    'Consistency beats motivation.',
-    'Stay focused. Stay disciplined.',
-    'Daily consistency builds greatness.'
-  ];
-
-  const [habits, setHabits] = useState(() => {
-    const saved = localStorage.getItem('habits');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 1,
-        name: 'Morning Workout',
-        streak: 4,
-        completed: false
-      },
-      {
-        id: 2,
-        name: 'Read 30 Minutes',
-        streak: 8,
-        completed: false
-      }
+  <script type="text/babel" data-presets="react">
+    // Entire React Application with all features, components, Framer Motion, LocalStorage, Charts, Pomodoro, Achievements etc.
+    // We'll build a modular but single-file version due to constraints, but with clean component structure and comments.
+    
+    const { useState, useEffect, useRef, useCallback } = React;
+    // Framer Motion from global (exposed as framerMotion) but we'll use motion from window
+    const { motion, AnimatePresence } = window.framerMotion;
+    
+    // --------------------- Helper Utilities ---------------------
+    const getTodayKey = () => new Date().toISOString().slice(0,10);
+    
+    // Default Demo Habits
+    const defaultHabits = [
+      { id: 'h1', name: 'Morning Meditation', category: 'Spiritual', target: 1, unit: 'session', icon: '🧘', priority: 'High', notes: '10 min mindfulness', history: { [getTodayKey()]: true, [new Date(Date.now() - 86400000).toISOString().slice(0,10)]: true } },
+      { id: 'h2', name: 'Read 20 Pages', category: 'Learning', target: 20, unit: 'pages', icon: '📚', priority: 'Medium', notes: '', history: { [getTodayKey()]: false } },
+      { id: 'h3', name: 'Workout', category: 'Fitness', target: 1, unit: 'workout', icon: '💪', priority: 'High', notes: '30 mins', history: { [getTodayKey()]: true } },
+      { id: 'h4', name: 'Journal', category: 'Personal Growth', target: 1, unit: 'entry', icon: '✍️', priority: 'Medium', notes: '', history: {} }
     ];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('habits', JSON.stringify(habits));
-  }, [habits]);
-
-  const addHabit = () => {
-    if (!habitInput.trim()) return;
-
-    const newHabit = {
-      id: Date.now(),
-      name: habitInput,
-      streak: 0,
-      completed: false
-    };
-
-    setHabits([...habits, newHabit]);
-    setHabitInput('');
-  };
-
-  const toggleHabit = (id) => {
-    const updated = habits.map(habit => {
-      if (habit.id === id) {
-        return {
-          ...habit,
-          completed: !habit.completed,
-          streak: !habit.completed ? habit.streak + 1 : Math.max(habit.streak - 1, 0)
-        };
+    
+    // Helper: compute streak given history array of booleans per day (ordered)
+    const computeStreak = (history) => {
+      let streak = 0;
+      const todayStr = getTodayKey();
+      let checkDate = new Date();
+      while (true) {
+        const dateStr = checkDate.toISOString().slice(0,10);
+        const completed = history[dateStr];
+        if (completed === true) streak++;
+        else if (completed === false && dateStr === todayStr) break;
+        else if (completed === undefined && dateStr !== todayStr) break;
+        else if (completed === false) break;
+        checkDate.setDate(checkDate.getDate() - 1);
+        if (streak > 300) break;
       }
-      return habit;
-    });
-
-    setHabits(updated);
-  };
-
-  const deleteHabit = (id) => {
-    setHabits(habits.filter(h => h.id !== id));
-  };
-
-  const completedHabits = habits.filter(h => h.completed).length;
-  const progress = habits.length ? Math.round((completedHabits / habits.length) * 100) : 0;
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setQuoteIndex(prev => (prev + 1) % quotes.length);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    let timer;
-
-    if (isRunning && focusTime > 0) {
-      timer = setInterval(() => {
-        setFocusTime(prev => prev - 1);
-      }, 1000);
-    }
-
-    if (focusTime === 0) {
-      setIsRunning(false);
-      setSessionCount(prev => prev + 1);
-      alert('Pomodoro Session Completed');
-    }
-
-    return () => clearInterval(timer);
-  }, [isRunning, focusTime]);
-
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-  };
-
-  return (
-    <div className={`min-h-screen p-6 transition-all duration-500 ${darkMode ? 'bg-[#121212] text-white' : 'bg-gray-100 text-black'}`}>
-
-      {/* Floating Glow Effects */}
-      <div className="fixed top-0 left-0 w-72 h-72 bg-green-500/10 blur-3xl rounded-full"></div>
-      <div className="fixed bottom-0 right-0 w-72 h-72 bg-emerald-400/10 blur-3xl rounded-full"></div>
-
-      <div className="max-w-6xl mx-auto">
-
-        <nav className="glass rounded-3xl p-5 mb-8 flex justify-between items-center sticky top-4 z-50">
-          <h1 className="text-2xl font-bold">🔥 Premium Habit Tracker</h1>
-
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="bg-green-500 px-4 py-2 rounded-xl font-bold"
-          >
-            {darkMode ? 'Light Mode' : 'Dark Mode'}
-          </button>
-        </nav>
-
-        <section className="text-center mb-16 pt-10">
-          <h1 className="text-6xl font-black mb-6 leading-tight">
-            Stay Consistent.<br />
-            Build Better Habits.
-          </h1>
-
-          <p className="text-gray-400 text-xl max-w-2xl mx-auto mb-8">
-            Track your habits, improve discipline, and build long-term consistency.
-          </p>
-
-          <button className="bg-green-500 hover:scale-105 transition-all px-10 py-5 rounded-2xl text-xl font-bold shadow-2xl shadow-green-500/30">
-            Start Tracking
-          </button>
-        </section>
-
-        <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold mb-4">
-            Premium Habit Tracker
-          </h1>
-
-          <p className="text-gray-400 text-lg">
-            Build discipline. Track progress. Stay consistent.
-          </p>
+      return streak;
+    };
+    
+    const getBestStreak = (habit) => {
+      // simplistic simulation: recalc from all entries sorted
+      const dates = Object.keys(habit.history).sort();
+      let current = 0, best = 0;
+      for (let i=0; i<dates.length; i++) {
+        if (habit.history[dates[i]] === true) {
+          current++;
+          best = Math.max(best, current);
+        } else {
+          current = 0;
+        }
+      }
+      return best;
+    };
+    
+    // Achievement definitions
+    const achievementsList = [
+      { id: 'streak7', name: '7 Day Streak', desc: 'Complete any habit 7 days in a row', icon: '🔥', check: (stats) => stats.maxStreak >= 7 },
+      { id: 'streak30', name: '30 Day Consistency', desc: '30 day streak achieved', icon: '🏆', check: (stats) => stats.maxStreak >= 30 },
+      { id: 'habitMaster', name: 'Habit Master', desc: 'Create 5+ habits', icon: '✨', check: (stats) => stats.totalHabits >= 5 },
+      { id: 'focusChampion', name: 'Focus Champion', desc: 'Complete 10 Pomodoro sessions', icon: '⏱️', check: (stats) => stats.pomodoroSessions >= 10 }
+    ];
+    
+    // Quotes array
+    const quotes = [
+      "Discipline creates freedom.", "Small habits create big results.", "Consistency beats motivation.",
+      "You don't have to be extreme, just consistent.", "The compound effect of habits is life-changing.",
+      "Your future self is built by your daily actions."
+    ];
+    
+    // --------------------- Custom Hooks ---------------------
+    const useLocalStorage = (key, initialValue) => {
+      const [stored, setStored] = useState(() => {
+        try {
+          const item = localStorage.getItem(key);
+          return item ? JSON.parse(item) : initialValue;
+        } catch { return initialValue; }
+      });
+      useEffect(() => localStorage.setItem(key, JSON.stringify(stored)), [key, stored]);
+      return [stored, setStored];
+    };
+    
+    // --------------------- Components ---------------------
+    const Navbar = ({ darkMode, toggleDark, setActiveSection, activeSection }) => {
+      const [mobileOpen, setMobileOpen] = useState(false);
+      const links = ['Dashboard', 'Analytics', 'Pomodoro', 'Achievements', 'Settings'];
+      return (
+        <motion.nav initial={{y:-20, opacity:0}} animate={{y:0, opacity:1}} className="fixed top-0 left-0 w-full z-50 bg-[#121212]/80 backdrop-blur-xl border-b border-white/5 px-5 md:px-10 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveSection('Dashboard')}>
+            <i className="fas fa-chart-line text-emerald-400 text-xl"></i>
+            <span className="text-white font-bold text-xl tracking-tight">Premium Habit Tracker</span>
+          </div>
+          <div className="hidden md:flex gap-8 text-sm font-medium">
+            {links.map(link => <button key={link} onClick={() => setActiveSection(link)} className={`${activeSection===link ? 'text-emerald-400' : 'text-gray-400'} hover:text-white transition`}>{link}</button>)}
+          </div>
+          <div className="flex gap-4 items-center">
+            <button onClick={toggleDark} className="text-gray-300 text-xl"><i className={`fas ${darkMode ? 'fa-sun' : 'fa-moon'}`}></i></button>
+            <button className="md:hidden text-white text-2xl" onClick={() => setMobileOpen(!mobileOpen)}><i className="fas fa-bars"></i></button>
+          </div>
+          {mobileOpen && <div className="absolute top-16 right-4 bg-[#1E1E1E] rounded-xl p-4 flex flex-col gap-3 shadow-2xl border border-white/10 md:hidden">{links.map(link => <button key={link} onClick={() => {setActiveSection(link); setMobileOpen(false)}} className="text-gray-200">{link}</button>)}</div>}
+        </motion.nav>
+      );
+    };
+    
+    const HeroSection = ({ setActiveSection }) => (
+      <motion.div initial={{opacity:0, scale:0.96}} animate={{opacity:1, scale:1}} transition={{duration:0.6}} className="pt-32 pb-16 text-center px-5">
+        <motion.h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Stay Consistent.<br/>Build Better Habits.</motion.h1>
+        <p className="text-gray-400 text-lg mt-6 max-w-xl mx-auto">Track your habits, improve discipline, and build long-term consistency.</p>
+        <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={() => setActiveSection('Dashboard')} className="mt-10 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg shadow-emerald-500/20 transition">Start Tracking <i className="fas fa-arrow-right ml-2"></i></motion.button>
+      </motion.div>
+    );
+    
+    const HabitForm = ({ onAddHabit }) => {
+      const [name, setName] = useState(''); const [category, setCategory] = useState('Health'); const [target, setTarget] = useState(1); const [icon, setIcon] = useState('⭐'); const [priority, setPriority] = useState('Medium'); const [notes, setNotes] = useState(''); const [error, setError] = useState('');
+      const handleSubmit = (e) => { e.preventDefault(); if(!name.trim()) return setError('Habit name required'); onAddHabit({name, category, target: Number(target), icon, priority, notes, history: {}}); resetForm(); setError(''); };
+      const resetForm = () => { setName(''); setCategory('Health'); setTarget(1); setIcon('⭐'); setPriority('Medium'); setNotes(''); };
+      return (
+        <motion.div initial={{y:30, opacity:0}} animate={{y:0, opacity:1}} className="glass-card rounded-3xl p-6 md:p-8 max-w-3xl mx-auto my-8">
+          <h2 className="text-2xl font-semibold text-white mb-5 flex items-center gap-2"><i className="fas fa-plus-circle text-emerald-400"></i> Create New Habit</h2>
+          {error && <div className="bg-red-500/20 text-red-300 p-3 rounded-xl mb-4">{error}</div>}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <input type="text" placeholder="Habit name *" value={name} onChange={(e)=>setName(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none"/>
+            <select value={category} onChange={(e)=>setCategory(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white"><option>Health</option><option>Fitness</option><option>Learning</option><option>Spiritual</option><option>Productivity</option><option>Personal Growth</option></select>
+            <div><label className="text-gray-400 text-sm">Daily target (count)</label><input type="number" value={target} onChange={(e)=>setTarget(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white w-full"/></div>
+            <input placeholder="Emoji icon (😊)" value={icon} onChange={(e)=>setIcon(e.target.value)} maxLength={2} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white"/>
+            <select value={priority} onChange={(e)=>setPriority(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white"><option>Low</option><option>Medium</option><option>High</option></select>
+            <textarea placeholder="Notes (optional)" value={notes} onChange={(e)=>setNotes(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white col-span-1 md:col-span-2"></textarea>
+            <div className="col-span-1 md:col-span-2 flex gap-4"><button type="submit" className="bg-emerald-600 px-6 py-3 rounded-xl text-white font-medium flex-1"><i className="fas fa-save mr-2"></i>Add Habit</button><button type="button" onClick={resetForm} className="bg-gray-700 px-6 py-3 rounded-xl">Reset</button></div>
+          </form>
+        </motion.div>
+      );
+    };
+    
+    const HabitCard = ({ habit, onToggle, onDelete, onEdit }) => {
+      const today = getTodayKey();
+      const completedToday = habit.history[today] === true;
+      const streak = computeStreak(habit.history);
+      const best = getBestStreak(habit);
+      const progressPercent = completedToday ? 100 : 0;
+      return (
+        <motion.div whileHover={{y:-6, scale:1.02}} className="glass-card rounded-2xl p-5 border border-white/10 transition-all duration-300">
+          <div className="flex justify-between items-start">
+            <div className="flex gap-3"><span className="text-3xl">{habit.icon}</span><div><h3 className="text-white font-bold text-lg">{habit.name}</h3><span className="text-emerald-400 text-xs bg-emerald-900/40 px-2 py-0.5 rounded-full">{habit.category}</span></div></div>
+            <div className="flex gap-2"><button onClick={() => onEdit(habit)} className="text-gray-400 hover:text-white"><i className="fas fa-edit"></i></button><button onClick={() => onDelete(habit.id)} className="text-gray-400 hover:text-red-400"><i className="fas fa-trash-alt"></i></button></div>
+          </div>
+          <div className="mt-3 flex justify-between text-sm"><span className="text-gray-400">🔥 Streak: {streak}</span><span className="text-gray-400">🏆 Best: {best}</span><span className="text-gray-400">Priority: {habit.priority}</span></div>
+          <div className="mt-3 bg-gray-800 rounded-full h-2 overflow-hidden"><div className="bg-emerald-500 h-full rounded-full" style={{width:`${progressPercent}%`}}></div></div>
+          <div className="flex justify-between items-center mt-4"><span className="text-gray-300 text-sm">{completedToday ? '✅ Completed today' : '❌ Not completed'}</span><button onClick={() => onToggle(habit.id)} className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${completedToday ? 'bg-gray-700 text-gray-300' : 'bg-emerald-600 text-white'}`}>{completedToday ? 'Undo' : 'Complete'}</button></div>
+          {habit.notes && <p className="text-gray-500 text-xs mt-2"><i className="fas fa-pen"></i> {habit.notes}</p>}
+        </motion.div>
+      );
+    };
+    
+    const Dashboard = ({ habits, onToggle, onDelete, onEdit }) => (
+      <div className="max-w-6xl mx-auto px-5 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {habits.map(habit => <HabitCard key={habit.id} habit={habit} onToggle={onToggle} onDelete={onDelete} onEdit={onEdit}/>)}
         </div>
-
-        <div className="glass rounded-3xl p-6 mb-8">
-
-          <div className="flex flex-col md:flex-row gap-4">
-
-            <input
-              type="text"
-              placeholder="Add a new habit..."
-              value={habitInput}
-              onChange={(e) => setHabitInput(e.target.value)}
-              className="flex-1 bg-[#1E1E1E] border border-gray-700 rounded-xl px-5 py-4 outline-none focus:border-green-500"
-            />
-
-            <button
-              onClick={addHabit}
-              className="bg-green-500 hover:bg-green-600 transition px-8 py-4 rounded-xl font-bold"
-            >
-              Add Habit
-            </button>
-
-          </div>
-
-        </div>
-
-        <section className="glass rounded-3xl p-8 mb-10 text-center">
-          <h2 className="text-3xl font-bold mb-4">Daily Motivation</h2>
-
-          <p className="text-2xl text-green-400 transition-all duration-500">
-            “{quotes[quoteIndex]}”
-          </p>
-        </section>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-
-          <div className="glass rounded-3xl p-6 text-center">
-            <h2 className="text-gray-400 mb-2">Total Habits</h2>
-            <p className="text-4xl font-bold">{habits.length}</p>
-          </div>
-
-          <div className="glass rounded-3xl p-6 text-center">
-            <h2 className="text-gray-400 mb-2">Completed</h2>
-            <p className="text-4xl font-bold text-green-400">{completedHabits}</p>
-          </div>
-
-          <div className="glass rounded-3xl p-6 text-center">
-            <h2 className="text-gray-400 mb-2">Progress</h2>
-            <p className="text-4xl font-bold text-green-400">{progress}%</p>
-          </div>
-
-        </div>
-
-        <div className="glass rounded-3xl p-6 mb-8">
-
-          <div className="w-full bg-gray-800 rounded-full h-5 overflow-hidden">
-            <div
-              className="bg-green-500 h-5 transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-
-        </div>
-
-        <section className="glass rounded-3xl p-8 mb-10">
-          <div className="flex flex-col items-center justify-center">
-            <h2 className="text-3xl font-bold mb-4">Pomodoro Focus Timer</h2>
-
-            <div className="text-7xl font-black text-green-400 mb-6">
-              {formatTime(focusTime)}
-            </div>
-
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={() => setIsRunning(true)}
-                className="bg-green-500 px-6 py-3 rounded-xl font-bold"
-              >
-                Start
-              </button>
-
-              <button
-                onClick={() => setIsRunning(false)}
-                className="bg-yellow-500 px-6 py-3 rounded-xl font-bold"
-              >
-                Pause
-              </button>
-
-              <button
-                onClick={() => {
-                  setFocusTime(25 * 60);
-                  setIsRunning(false);
-                }}
-                className="bg-red-500 px-6 py-3 rounded-xl font-bold"
-              >
-                Reset
-              </button>
-            </div>
-
-            <p className="text-gray-400">
-              Sessions Completed: {sessionCount}
-            </p>
-          </div>
-        </section>
-
-        <section className="glass rounded-3xl p-8 mb-10">
-          <h2 className="text-3xl font-bold mb-6">Achievements</h2>
-
-          <div className="grid md:grid-cols-4 gap-6">
-
-            <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 text-center">
-              <div className="text-5xl mb-3">🏆</div>
-              <h3 className="font-bold text-xl">7 Day Streak</h3>
-            </div>
-
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-6 text-center">
-              <div className="text-5xl mb-3">🔥</div>
-              <h3 className="font-bold text-xl">Consistency Master</h3>
-            </div>
-
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 text-center">
-              <div className="text-5xl mb-3">🎯</div>
-              <h3 className="font-bold text-xl">Focus Champion</h3>
-            </div>
-
-            <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-6 text-center">
-              <div className="text-5xl mb-3">⭐</div>
-              <h3 className="font-bold text-xl">Habit Legend</h3>
-            </div>
-
-          </div>
-        </section>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-          {habits.map(habit => (
-
-            <div
-              key={habit.id}
-              className="habit-card glass rounded-3xl p-6"
-            >
-
-              <div className="flex justify-between items-start mb-5">
-
-                <div>
-                  <h3 className="text-2xl font-bold mb-2">
-                    {habit.name}
-                  </h3>
-
-                  <p className="text-gray-400">
-                    🔥 Streak: {habit.streak} days
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => deleteHabit(habit.id)}
-                  className="text-red-400 hover:text-red-500 text-xl"
-                >
-                  ×
-                </button>
-
-              </div>
-
-              <button
-                onClick={() => toggleHabit(habit.id)}
-                className={`w-full py-4 rounded-xl font-bold transition ${habit.completed
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-800 hover:bg-gray-700'
-                }`}
-              >
-                {habit.completed ? 'Completed Today ✓' : 'Mark Complete'}
-              </button>
-
-            </div>
-
-          ))}
-
-        </div>
-
-        <div className="mt-12 text-center text-gray-500">
-          Made with React + Tailwind CSS
-        </div>
-
+        {habits.length===0 && <div className="text-center py-20"><i className="fas fa-leaf text-gray-600 text-6xl mb-4"></i><p className="text-gray-400">No habits yet. Create your first premium habit!</p></div>}
       </div>
-
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-
-</script>
-
-</body>
-</html>
+    );
+    
+    // Analytics component with chart.js
+    const AnalyticsSection = ({ habits }) => {
+      const chartRef = useRef(); const chartInstance = useRef(null);
+      useEffect(() => {
+        if(!chartRef.current) return;
+        const completedTodayCount = habits.filter(h => h.history[getTodayKey()] === true).length;
+        const total = habits.length;
+        const ctx = chartRef.current.getContext('2d');
+        if(chartInstance.current) chartInstance.current.destroy();
+        chartInstance.current = new Chart(ctx, { type: 'doughnut', data: { labels: ['Completed Today', 'Remaining'], datasets: [{ data: [completedTodayCount, total-completedTodayCount], backgroundColor: ['#10B981', '#333333'], borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { labels: { color: '#fff' } } } } });
+        return () => chartInstance.current?.destroy();
+      }, [habits]);
+      const totalHabits = habits.length;
+      const completedToday = habits.filter(h => h.history[getTodayKey()] === true).length;
+      const successRate = totalHabits ? Math.round((completedToday/totalHabits)*100) : 0;
+      const bestStreakOverall = Math.max(...habits.map(h => getBestStreak(h)), 0);
+      return (
+        <div className="max-w-6xl mx-auto p-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Total Habits</h4><p className="text-3xl font-bold text-white">{totalHabits}</p></div>
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Completed Today</h4><p className="text-3xl font-bold text-emerald-400">{completedToday}</p></div>
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Best Streak</h4><p className="text-3xl font-bold text-white">{bestStreakOverall}</p></div>
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Success Rate</h4><p className="text-3xl font-bold text-white">{successRate}%</p></div>
+          </div>
+          <div className="bg-[#1E1E1E] p-6 rounded-3xl"><canvas ref={chartRef} width="400" height="400" className="max-h-80 mx-auto"></canvas></div>
+        </div>
+      );
+    };
+    
+    const PomodoroTimer = ({ onSessionComplete, sessionCount, setSessionCount }) => {
+      const [time, setTime] = useState(25*60); const [mode, setMode] = useState('focus'); const [active, setActive] = useState(false); const intervalRef = useRef(null);
+      const durations = { focus: 25*60, shortBreak: 5*60, longBreak: 15*60 };
+      useEffect(() => { if(active) intervalRef.current = setInterval(() => setTime(t => t-1), 1000); else clearInterval(intervalRef.current); return () => clearInterval(intervalRef.current); }, [active]);
+      useEffect(() => { if(time===0 && active) { new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3').play().catch(()=>{}); if(mode==='focus') { setSessionCount(prev=>prev+1); onSessionComplete(sessionCount+1); setMode('shortBreak'); setTime(durations.shortBreak); } else if(mode==='shortBreak') { setMode('focus'); setTime(durations.focus); } else if(mode==='longBreak') { setMode('focus'); setTime(durations.focus); } setActive(false); } }, [time, active, mode]);
+      const resetTimer = () => { setActive(false); setTime(durations[mode]); };
+      const format = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+      const progress = 1 - (time / durations[mode]);
+      return (
+        <div className="max-w-md mx-auto bg-[#1E1E1E] rounded-3xl p-8 text-center">
+          <div className="relative w-48 h-48 mx-auto"><svg className="w-full h-full transform -rotate-90"><circle cx="96" cy="96" r="88" stroke="#333" strokeWidth="8" fill="none"/><circle cx="96" cy="96" r="88" stroke="#10B981" strokeWidth="8" fill="none" strokeDasharray={2*Math.PI*88} strokeDashoffset={2*Math.PI*88*(1-progress)} className="progress-ring-circle"/></svg><div className="absolute inset-0 flex items-center justify-center"><span className="text-4xl font-mono text-white">{format(time)}</span></div></div>
+          <div className="flex justify-center gap-4 mt-8"><button onClick={()=>setActive(!active)} className="bg-emerald-600 px-6 py-2 rounded-full text-white"><i className={`fas fa-${active?'pause':'play'}`}></i></button><button onClick={resetTimer} className="bg-gray-700 px-6 py-2 rounded-full text-white"><i className="fas fa-sync-alt"></i></button></div>
+          <p className="mt-4 text-gray-400">Mode: {mode} | Sessions: {sessionCount}</p>
+        </div>
+      );
+    };
+    
+    const AchievementSection = ({ stats }) => {
+      const [unlocked, setUnlocked] = useState(() => achievementsList.filter(a => a.check(stats)).map(a=>a.id));<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Premium Habit Tracker | Build Better Habits</title>
+  <!-- Tailwind + Google Fonts + Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Chart.js + Recharts (via CDN for simplicity) - but we'll use chart.js for demo -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Framer Motion via ESM (React) -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.js"></script>
+  <!-- For local storage persistence and hooks we'll rely on pure React -->
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      background-color: #121212;
+      scroll-behavior: smooth;
+    }
+    /* Custom glassmorphism, glow effects, scrollbar */
+    .glass-card {
+      background: rgba(30, 30, 30, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .glow-green {
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1E1E1E;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #10B981;
+      border-radius: 10px;
+    }
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.35s;
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    input, select, textarea {
+      transition: all 0.2s ease;
+    }
+  </style>
+  <script type="text/babel" data-presets="react">
+    // Entire React Application with all features, components, Framer Motion, LocalStorage, Charts, Pomodoro, Achievements etc.
+    // We'll build a modular but single-file version due to constraints, but with clean component structure and comments.
+    
+    const { useState, useEffect, useRef, useCallback } = React;
+    // Framer Motion from global (exposed as framerMotion) but we'll use motion from window
+    const { motion, AnimatePresence } = window.framerMotion;
+    
+    // --------------------- Helper Utilities ---------------------
+    const getTodayKey = () => new Date().toISOString().slice(0,10);
+    
+    // Default Demo Habits
+    const defaultHabits = [
+      { id: 'h1', name: 'Morning Meditation', category: 'Spiritual', target: 1, unit: 'session', icon: '🧘', priority: 'High', notes: '10 min mindfulness', history: { [getTodayKey()]: true, [new Date(Date.now() - 86400000).toISOString().slice(0,10)]: true } },
+      { id: 'h2', name: 'Read 20 Pages', category: 'Learning', target: 20, unit: 'pages', icon: '📚', priority: 'Medium', notes: '', history: { [getTodayKey()]: false } },
+      { id: 'h3', name: 'Workout', category: 'Fitness', target: 1, unit: 'workout', icon: '💪', priority: 'High', notes: '30 mins', history: { [getTodayKey()]: true } },
+      { id: 'h4', name: 'Journal', category: 'Personal Growth', target: 1, unit: 'entry', icon: '✍️', priority: 'Medium', notes: '', history: {} }
+    ];
+    
+    // Helper: compute streak given history array of booleans per day (ordered)
+    const computeStreak = (history) => {
+      let streak = 0;
+      const todayStr = getTodayKey();
+      let checkDate = new Date();
+      while (true) {
+        const dateStr = checkDate.toISOString().slice(0,10);
+        const completed = history[dateStr];
+        if (completed === true) streak++;
+        else if (completed === false && dateStr === todayStr) break;
+        else if (completed === undefined && dateStr !== todayStr) break;
+        else if (completed === false) break;
+        checkDate.setDate(checkDate.getDate() - 1);
+        if (streak > 300) break;
+      }
+      return streak;
+    };
+    
+    const getBestStreak = (habit) => {
+      // simplistic simulation: recalc from all entries sorted
+      const dates = Object.keys(habit.history).sort();
+      let current = 0, best = 0;
+      for (let i=0; i<dates.length; i++) {
+        if (habit.history[dates[i]] === true) {
+          current++;
+          best = Math.max(best, current);
+        } else {
+          current = 0;
+        }
+      }
+      return best;
+    };
+    
+    // Achievement definitions
+    const achievementsList = [
+      { id: 'streak7', name: '7 Day Streak', desc: 'Complete any habit 7 days in a row', icon: '🔥', check: (stats) => stats.maxStreak >= 7 },
+      { id: 'streak30', name: '30 Day Consistency', desc: '30 day streak achieved', icon: '🏆', check: (stats) => stats.maxStreak >= 30 },
+      { id: 'habitMaster', name: 'Habit Master', desc: 'Create 5+ habits', icon: '✨', check: (stats) => stats.totalHabits >= 5 },
+      { id: 'focusChampion', name: 'Focus Champion', desc: 'Complete 10 Pomodoro sessions', icon: '⏱️', check: (stats) => stats.pomodoroSessions >= 10 }
+    ];
+    
+    // Quotes array
+    const quotes = [
+      "Discipline creates freedom.", "Small habits create big results.", "Consistency beats motivation.",
+      "You don't have to be extreme, just consistent.", "The compound effect of habits is life-changing.",
+      "Your future self is built by your daily actions."
+    ];
+    
+    // --------------------- Custom Hooks ---------------------
+    const useLocalStorage = (key, initialValue) => {
+      const [stored, setStored] = useState(() => {
+        try {
+          const item = localStorage.getItem(key);
+          return item ? JSON.parse(item) : initialValue;
+        } catch { return initialValue; }
+      });
+      useEffect(() => localStorage.setItem(key, JSON.stringify(stored)), [key, stored]);
+      return [stored, setStored];
+    };
+    
+    // --------------------- Components ---------------------
+    const Navbar = ({ darkMode, toggleDark, setActiveSection, activeSection }) => {
+      const [mobileOpen, setMobileOpen] = useState(false);
+      const links = ['Dashboard', 'Analytics', 'Pomodoro', 'Achievements', 'Settings'];
+      return (
+        <motion.nav initial={{y:-20, opacity:0}} animate={{y:0, opacity:1}} className="fixed top-0 left-0 w-full z-50 bg-[#121212]/80 backdrop-blur-xl border-b border-white/5 px-5 md:px-10 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveSection('Dashboard')}>
+            <i className="fas fa-chart-line text-emerald-400 text-xl"></i>
+            <span className="text-white font-bold text-xl tracking-tight">Premium Habit Tracker</span>
+          </div>
+          <div className="hidden md:flex gap-8 text-sm font-medium">
+            {links.map(link => <button key={link} onClick={() => setActiveSection(link)} className={`${activeSection===link ? 'text-emerald-400' : 'text-gray-400'} hover:text-white transition`}>{link}</button>)}
+          </div>
+          <div className="flex gap-4 items-center">
+            <button onClick={toggleDark} className="text-gray-300 text-xl"><i className={`fas ${darkMode ? 'fa-sun' : 'fa-moon'}`}></i></button>
+            <button className="md:hidden text-white text-2xl" onClick={() => setMobileOpen(!mobileOpen)}><i className="fas fa-bars"></i></button>
+          </div>
+          {mobileOpen && <div className="absolute top-16 right-4 bg-[#1E1E1E] rounded-xl p-4 flex flex-col gap-3 shadow-2xl border border-white/10 md:hidden">{links.map(link => <button key={link} onClick={() => {setActiveSection(link); setMobileOpen(false)}} className="text-gray-200">{link}</button>)}</div>}
+        </motion.nav>
+      );
+    };
+    
+    const HeroSection = ({ setActiveSection }) => (
+      <motion.div initial={{opacity:0, scale:0.96}} animate={{opacity:1, scale:1}} transition={{duration:0.6}} className="pt-32 pb-16 text-center px-5">
+        <motion.h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">Stay Consistent.<br/>Build Better Habits.</motion.h1>
+        <p className="text-gray-400 text-lg mt-6 max-w-xl mx-auto">Track your habits, improve discipline, and build long-term consistency.</p>
+        <motion.button whileHover={{scale:1.05}} whileTap={{scale:0.95}} onClick={() => setActiveSection('Dashboard')} className="mt-10 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg shadow-emerald-500/20 transition">Start Tracking <i className="fas fa-arrow-right ml-2"></i></motion.button>
+      </motion.div>
+    );
+    
+    const HabitForm = ({ onAddHabit }) => {
+      const [name, setName] = useState(''); const [category, setCategory] = useState('Health'); const [target, setTarget] = useState(1); const [icon, setIcon] = useState('⭐'); const [priority, setPriority] = useState('Medium'); const [notes, setNotes] = useState(''); const [error, setError] = useState('');
+      const handleSubmit = (e) => { e.preventDefault(); if(!name.trim()) return setError('Habit name required'); onAddHabit({name, category, target: Number(target), icon, priority, notes, history: {}}); resetForm(); setError(''); };
+      const resetForm = () => { setName(''); setCategory('Health'); setTarget(1); setIcon('⭐'); setPriority('Medium'); setNotes(''); };
+      return (
+        <motion.div initial={{y:30, opacity:0}} animate={{y:0, opacity:1}} className="glass-card rounded-3xl p-6 md:p-8 max-w-3xl mx-auto my-8">
+          <h2 className="text-2xl font-semibold text-white mb-5 flex items-center gap-2"><i className="fas fa-plus-circle text-emerald-400"></i> Create New Habit</h2>
+          {error && <div className="bg-red-500/20 text-red-300 p-3 rounded-xl mb-4">{error}</div>}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <input type="text" placeholder="Habit name *" value={name} onChange={(e)=>setName(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white focus:border-emerald-500 outline-none"/>
+            <select value={category} onChange={(e)=>setCategory(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white"><option>Health</option><option>Fitness</option><option>Learning</option><option>Spiritual</option><option>Productivity</option><option>Personal Growth</option></select>
+            <div><label className="text-gray-400 text-sm">Daily target (count)</label><input type="number" value={target} onChange={(e)=>setTarget(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white w-full"/></div>
+            <input placeholder="Emoji icon (😊)" value={icon} onChange={(e)=>setIcon(e.target.value)} maxLength={2} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white"/>
+            <select value={priority} onChange={(e)=>setPriority(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white"><option>Low</option><option>Medium</option><option>High</option></select>
+            <textarea placeholder="Notes (optional)" value={notes} onChange={(e)=>setNotes(e.target.value)} className="bg-[#2a2a2a] border border-gray-700 rounded-xl p-3 text-white col-span-1 md:col-span-2"></textarea>
+            <div className="col-span-1 md:col-span-2 flex gap-4"><button type="submit" className="bg-emerald-600 px-6 py-3 rounded-xl text-white font-medium flex-1"><i className="fas fa-save mr-2"></i>Add Habit</button><button type="button" onClick={resetForm} className="bg-gray-700 px-6 py-3 rounded-xl">Reset</button></div>
+          </form>
+        </motion.div>
+      );
+    };
+    
+    const HabitCard = ({ habit, onToggle, onDelete, onEdit }) => {
+      const today = getTodayKey();
+      const completedToday = habit.history[today] === true;
+      const streak = computeStreak(habit.history);
+      const best = getBestStreak(habit);
+      const progressPercent = completedToday ? 100 : 0;
+      return (
+        <motion.div whileHover={{y:-6, scale:1.02}} className="glass-card rounded-2xl p-5 border border-white/10 transition-all duration-300">
+          <div className="flex justify-between items-start">
+            <div className="flex gap-3"><span className="text-3xl">{habit.icon}</span><div><h3 className="text-white font-bold text-lg">{habit.name}</h3><span className="text-emerald-400 text-xs bg-emerald-900/40 px-2 py-0.5 rounded-full">{habit.category}</span></div></div>
+            <div className="flex gap-2"><button onClick={() => onEdit(habit)} className="text-gray-400 hover:text-white"><i className="fas fa-edit"></i></button><button onClick={() => onDelete(habit.id)} className="text-gray-400 hover:text-red-400"><i className="fas fa-trash-alt"></i></button></div>
+          </div>
+          <div className="mt-3 flex justify-between text-sm"><span className="text-gray-400">🔥 Streak: {streak}</span><span className="text-gray-400">🏆 Best: {best}</span><span className="text-gray-400">Priority: {habit.priority}</span></div>
+          <div className="mt-3 bg-gray-800 rounded-full h-2 overflow-hidden"><div className="bg-emerald-500 h-full rounded-full" style={{width:`${progressPercent}%`}}></div></div>
+          <div className="flex justify-between items-center mt-4"><span className="text-gray-300 text-sm">{completedToday ? '✅ Completed today' : '❌ Not completed'}</span><button onClick={() => onToggle(habit.id)} className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${completedToday ? 'bg-gray-700 text-gray-300' : 'bg-emerald-600 text-white'}`}>{completedToday ? 'Undo' : 'Complete'}</button></div>
+          {habit.notes && <p className="text-gray-500 text-xs mt-2"><i className="fas fa-pen"></i> {habit.notes}</p>}
+        </motion.div>
+      );
+    };
+    
+    const Dashboard = ({ habits, onToggle, onDelete, onEdit }) => (
+      <div className="max-w-6xl mx-auto px-5 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {habits.map(habit => <HabitCard key={habit.id} habit={habit} onToggle={onToggle} onDelete={onDelete} onEdit={onEdit}/>)}
+        </div>
+        {habits.length===0 && <div className="text-center py-20"><i className="fas fa-leaf text-gray-600 text-6xl mb-4"></i><p className="text-gray-400">No habits yet. Create your first premium habit!</p></div>}
+      </div>
+    );
+    
+    // Analytics component with chart.js
+    const AnalyticsSection = ({ habits }) => {
+      const chartRef = useRef(); const chartInstance = useRef(null);
+      useEffect(() => {
+        if(!chartRef.current) return;
+        const completedTodayCount = habits.filter(h => h.history[getTodayKey()] === true).length;
+        const total = habits.length;
+        const ctx = chartRef.current.getContext('2d');
+        if(chartInstance.current) chartInstance.current.destroy();
+        chartInstance.current = new Chart(ctx, { type: 'doughnut', data: { labels: ['Completed Today', 'Remaining'], datasets: [{ data: [completedTodayCount, total-completedTodayCount], backgroundColor: ['#10B981', '#333333'], borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { labels: { color: '#fff' } } } } });
+        return () => chartInstance.current?.destroy();
+      }, [habits]);
+      const totalHabits = habits.length;
+      const completedToday = habits.filter(h => h.history[getTodayKey()] === true).length;
+      const successRate = totalHabits ? Math.round((completedToday/totalHabits)*100) : 0;
+      const bestStreakOverall = Math.max(...habits.map(h => getBestStreak(h)), 0);
+      return (
+        <div className="max-w-6xl mx-auto p-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Total Habits</h4><p className="text-3xl font-bold text-white">{totalHabits}</p></div>
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Completed Today</h4><p className="text-3xl font-bold text-emerald-400">{completedToday}</p></div>
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Best Streak</h4><p className="text-3xl font-bold text-white">{bestStreakOverall}</p></div>
+            <div className="bg-[#1E1E1E] rounded-2xl p-5 text-center"><h4 className="text-gray-400">Success Rate</h4><p className="text-3xl font-bold text-white">{successRate}%</p></div>
+          </div>
+          <div className="bg-[#1E1E1E] p-6 rounded-3xl"><canvas ref={chartRef} width="400" height="400" className="max-h-80 mx-auto"></canvas></div>
+        </div>
+      );
+    };
+    
+    const PomodoroTimer = ({ onSessionComplete, sessionCount, setSessionCount }) => {
+      const [time, setTime] = useState(25*60); const [mode, setMode] = useState('focus'); const [active, setActive] = useState(false); const intervalRef = useRef(null);
+      const durations = { focus: 25*60, shortBreak: 5*60, longBreak: 15*60 };
+      useEffect(() => { if(active) intervalRef.current = setInterval(() => setTime(t => t-1), 1000); else clearInterval(intervalRef.current); return () => clearInterval(intervalRef.current); }, [active]);
+      useEffect(() => { if(time===0 && active) { new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3').play().catch(()=>{}); if(mode==='focus') { setSessionCount(prev=>prev+1); onSessionComplete(sessionCount+1); setMode('shortBreak'); setTime(durations.shortBreak); } else if(mode==='shortBreak') { setMode('focus'); setTime(durations.focus); } else if(mode==='longBreak') { setMode('focus'); setTime(durations.focus); } setActive(false); } }, [time, active, mode]);
+      const resetTimer = () => { setActive(false); setTime(durations[mode]); };
+      const format = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+      const progress = 1 - (time / durations[mode]);
+      return (
+        <div className="max-w-md mx-auto bg-[#1E1E1E] rounded-3xl p-8 text-center">
+          <div className="relative w-48 h-48 mx-auto"><svg className="w-full h-full transform -rotate-90"><circle cx="96" cy="96" r="88" stroke="#333" strokeWidth="8" fill="none"/><circle cx="96" cy="96" r="88" stroke="#10B981" strokeWidth="8" fill="none" strokeDasharray={2*Math.PI*88} strokeDashoffset={2*Math.PI*88*(1-progress)} className="progress-ring-circle"/></svg><div className="absolute inset-0 flex items-center justify-center"><span className="text-4xl font-mono text-white">{format(time)}</span></div></div>
+          <div className="flex justify-center gap-4 mt-8"><button onClick={()=>setActive(!active)} className="bg-emerald-600 px-6 py-2 rounded-full text-white"><i className={`fas fa-${active?'pause':'play'}`}></i></button><button onClick={resetTimer} className="bg-gray-700 px-6 py-2 rounded-full text-white"><i className="fas fa-sync-alt"></i></button></div>
+          <p className="mt-4 text-gray-400">Mode: {mode} | Sessions: {sessionCount}</p>
+        </div>
+      );
+    };
+    
+    const AchievementSection = ({ stats }) => {
+      const [unlocked, setUnlocked] = useState(() => achievementsList.filter(a => a.check(stats)).map(a=>a.id));
+      useEffect(() => { setUnlocked(achievementsList.filter(a => a.check(stats)).map(a=>a.id)); }, [stats]);
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto p-5">
+          {achievementsList.map(ach => (<motion.div key={ach.id} whileHover={{scale:1.02}} className={`p-5 rounded-2xl ${unlocked.includes(ach.id) ? 'bg-emerald-900/30 border border-emerald-500/50' : 'bg-[#1E1E1E] opacity-60'}`}><div className="text-4xl mb-2">{ach.icon}</div><h3 className="text-white font-bold">{ach.name}</h3><p className="text-gray-400 text-sm"
+      useEffect(() => { setUnlocked(achievementsList.filter(a => a.check(stats)).map(a=>a.id)); }, [stats]);
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto p-5">
+          {achievementsList.map(ach => (<motion.div key={ach.id} whileHover={{scale:1.02}} className={`p-5 rounded-2xl ${unlocked.includes(ach.id) ? 'bg-emerald-900/30 border border-emerald-500/50' : 'bg-[#1E1E1E] opacity-60'}`}><div className="text-4xl mb-2">{ach.icon}</div><h3 className="text-white font-bold">{ach.name}</h3><p className="text-gray-400 text-sm"
