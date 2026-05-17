@@ -1,199 +1,544 @@
-     <!DOCTYPE html>
+<!D html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Nexus Habit | Premium AI Productivity Suite</title>
-  <!-- Google Fonts + Tailwind + Font Awesome + Chart.js + Framer Motion -->
+  <meta name="description" content="Premium Habit Tracker - Build better habits with AI-powered insights, gamification, and focus tools">
+  <meta name="theme-color" content="#10B981">
+  <title>Nexus Habit | Premium Productivity Suite</title>
+  
+  <!-- Preconnect to CDNs -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- React & ReactDOM -->
   <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  
+  <!-- Framer Motion -->
   <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.js"></script>
-  <!-- Confetti -->
+  
+  <!-- Babel for JSX -->
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+  
   <style>
-    * { font-family: 'Inter', sans-serif; }
-    body { background: radial-gradient(circle at 20% 30%, #0A0A0A, #030303); min-height: 100vh; }
-    .glass-premium { background: rgba(18, 18, 24, 0.6); backdrop-filter: blur(14px); border: 1px solid rgba(16, 185, 129, 0.2); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-    .glow-green { box-shadow: 0 0 18px rgba(16, 185, 129, 0.4); transition: all 0.3s ease; }
-    .glow-green:hover { box-shadow: 0 0 28px rgba(16, 185, 129, 0.7); }
-    .neon-progress { background: linear-gradient(90deg, #10B981, #34D399, #059669); background-size: 200% auto; animation: shimmer 2s linear infinite; }
-    @keyframes shimmer { 0% { background-position: 0% 0; } 100% { background-position: 200% 0; } }
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: #111; }
-    ::-webkit-scrollbar-thumb { background: #10B981; border-radius: 10px; }
-    .heatmap-cell { transition: all 0.2s; }
-    .floating-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-    .floating-bg div { position: absolute; background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; filter: blur(60px); animation: float 20s infinite; }
-    @keyframes float { 0% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-30px) scale(1.1); } 100% { transform: translateY(0px) scale(1); } }
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    body {
+      background: radial-gradient(circle at 20% 30%, #0A0A0A, #030303);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #10B981;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #059669;
+    }
+    
+    /* Glass morphism effect */
+    .glass-premium {
+      background: rgba(18, 18, 24, 0.6);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Glow effects */
+    .glow-green {
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.4);
+      transition: all 0.3s ease;
+    }
+    
+    .glow-green:hover {
+      box-shadow: 0 0 28px rgba(16, 185, 129, 0.7);
+    }
+    
+    /* Animated gradient progress bar */
+    .neon-progress {
+      background: linear-gradient(90deg, #10B981, #34D399, #059669);
+      background-size: 200% auto;
+      animation: shimmer 2s linear infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: 0% 0; }
+      100% { background-position: 200% 0; }
+    }
+    
+    /* Floating background elements */
+    .floating-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .floating-bg div {
+      position: absolute;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: float 20s infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-30px) scale(1.1); }
+      100% { transform: translateY(0px) scale(1); }
+    }
+    
+    /* Smooth transitions */
+    button, a, .habit-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Loading animation */
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(16, 185, 129, 0.3);
+      border-radius: 50%;
+      border-top-color: #10B981;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .glass-premium {
+        backdrop-filter: blur(10px);
+      }
+    }
+    
+    /* Heatmap grid */
+    .grid-cols-15 {
+      grid-template-columns: repeat(15, minmax(0, 1fr));
+    }
+    
+    /* Custom focus ring */
+    *:focus {
+      outline: none;
+      ring: 2px solid #10B981;
+    }
   </style>
+</head>
+<body>
+  <div id="root"></div>
+  
   <script type="text/babel" data-presets="react">
-    // --------------------------------------------------------------
-    // PREMIUM SAAS HABIT TRACKER - Full AI, Gamification, Analytics
-    // React 18 + Tailwind + Framer Motion + Chart.js + LocalStorage
-    // --------------------------------------------------------------
+    // ============================================
+    // NEXUS HABIT - Premium Habit Tracker
+    // Production-Ready React Application
+    // ============================================
+    
     const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
     const { motion, AnimatePresence } = window.framerMotion;
     const canvasConfetti = window.canvasConfetti;
-
-    // ----- Helper Functions -----
-    const getTodayKey = () => new Date().toISOString().slice(0,10);
-    const getDaysArray = (days = 90) => { let arr = []; for(let i=days; i>=0; i--) { let d = new Date(); d.setDate(d.getDate()-i); arr.push(d.toISOString().slice(0,10)); } return arr; };
+    
+    // ========== UTILITY FUNCTIONS ==========
+    const getTodayKey = () => new Date().toISOString().slice(0, 10);
+    
+    const getDaysArray = (days = 90) => {
+      let arr = [];
+      for (let i = days; i >= 0; i--) {
+        let d = new Date();
+        d.setDate(d.getDate() - i);
+        arr.push(d.toISOString().slice(0, 10));
+      }
+      return arr;
+    };
     
     // XP & Level System
     const getLevelFromXP = (xp) => {
-      if(xp < 200) return { name: 'Beginner', level: 1, next: 200 };
-      if(xp < 600) return { name: 'Consistent', level: 2, next: 600 };
-      if(xp < 1500) return { name: 'Disciplined', level: 3, next: 1500 };
-      if(xp < 3500) return { name: 'Elite', level: 4, next: 3500 };
-      return { name: 'Master', level: 5, next: null };
+      if (xp < 200) return { name: 'Beginner', level: 1, next: 200, icon: '🌱' };
+      if (xp < 600) return { name: 'Consistent', level: 2, next: 600, icon: '📈' };
+      if (xp < 1500) return { name: 'Disciplined', level: 3, next: 1500, icon: '⚡' };
+      if (xp < 3500) return { name: 'Elite', level: 4, next: 3500, icon: '🏆' };
+      return { name: 'Master', level: 5, next: null, icon: '👑' };
     };
     
-    // AI Insights (mock AI)
-    const generateAIInsight = (habits, streakData) => {
+    // Compute streak from history
+    const computeStreak = (history) => {
+      let streak = 0;
+      let check = new Date();
+      while (true) {
+        const d = check.toISOString().slice(0, 10);
+        if (history[d] === true) streak++;
+        else if (history[d] === false && d === getTodayKey()) break;
+        else if (!history[d] && d !== getTodayKey()) break;
+        else if (history[d] === false) break;
+        check.setDate(check.getDate() - 1);
+        if (streak > 500) break;
+      }
+      return streak;
+    };
+    
+    const getBestStreak = (habit) => {
+      let curr = 0, best = 0;
+      Object.keys(habit.history).sort().forEach(d => {
+        if (habit.history[d]) {
+          curr++;
+          best = Math.max(best, curr);
+        } else {
+          curr = 0;
+        }
+      });
+      return best;
+    };
+    
+    // AI Insights Generator
+    const generateAIInsight = (habits) => {
       const completedToday = habits.filter(h => h.history[getTodayKey()] === true).length;
       const total = habits.length;
-      if(total === 0) return "✨ Add your first habit to unlock AI coaching!";
-      if(completedToday === total && total>0) return "🔥 Perfect day! Consistency compounds — you're in the top 10% of users.";
-      if(completedToday === 0) return "🌱 Every master was once a beginner. Start with one small action today.";
-      return `📊 Your success rate is ${Math.round((completedToday/total)*100)}%. Keep the momentum, 3 more completions and you'll break your record.`;
+      if (total === 0) return "✨ Add your first habit to unlock AI coaching!";
+      if (completedToday === total && total > 0) return "🔥 Perfect day! Consistency compounds — you're in the top 10% of users.";
+      if (completedToday === 0) return "🌱 Every master was once a beginner. Start with one small action today.";
+      const avgStreak = habits.reduce((sum, h) => sum + computeStreak(h.history), 0) / total;
+      if (avgStreak > 5) return `🎯 Amazing! Your average streak is ${avgStreak.toFixed(1)} days. You're building unshakeable discipline.`;
+      return `📊 Your success rate is ${Math.round((completedToday / total) * 100)}%. Keep the momentum!`;
     };
     
-    // Mock daily challenges
-    const dailyChallenges = [
-      { id: 'ch1', text: 'Complete 3 habits before noon', reward: 50, completed: false },
-      { id: 'ch2', text: 'Maintain a 5-day streak', reward: 100, completed: false },
-      { id: 'ch3', text: 'Log a journal note', reward: 30, completed: false }
-    ];
-
-    // Main App Component
+    // ========== MAIN APP COMPONENT ==========
     const App = () => {
-      // ----- State with LocalStorage -----
+      // State Management with LocalStorage
       const [habits, setHabits] = useState(() => {
         const saved = localStorage.getItem('nexus_habits');
-        if(saved) return JSON.parse(saved);
+        if (saved) return JSON.parse(saved);
         return [
-          { id: 'h1', name: 'Morning Meditation', category: 'Spiritual', priority: 'High', icon: '🧘', target: 1, unit: 'session', notes: '', schedule: 'daily', history: { [getTodayKey()]: true, [new Date(Date.now()-86400000).toISOString().slice(0,10)]: true }, order: 0 },
-          { id: 'h2', name: 'Read 30 Mins', category: 'Study', priority: 'Medium', icon: '📖', target: 1, unit: 'session', notes: 'Deep work', schedule: 'daily', history: { [getTodayKey()]: false }, order: 1 },
-          { id: 'h3', name: 'Workout', category: 'Fitness', priority: 'High', icon: '💪', target: 1, unit: 'workout', notes: '', schedule: 'daily', history: { [getTodayKey()]: true }, order: 2 },
+          { 
+            id: 'h1', 
+            name: 'Morning Meditation', 
+            category: 'Spiritual', 
+            priority: 'High', 
+            icon: '🧘', 
+            target: 1, 
+            unit: 'session', 
+            notes: 'Start day with clarity', 
+            schedule: 'daily', 
+            history: { 
+              [getTodayKey()]: true,
+              [new Date(Date.now() - 86400000).toISOString().slice(0, 10)]: true 
+            },
+            createdAt: new Date().toISOString()
+          },
+          { 
+            id: 'h2', 
+            name: 'Read 30 Mins', 
+            category: 'Study', 
+            priority: 'Medium', 
+            icon: '📖', 
+            target: 1, 
+            unit: 'session', 
+            notes: 'Deep work session', 
+            schedule: 'daily', 
+            history: { [getTodayKey()]: false },
+            createdAt: new Date().toISOString()
+          },
+          { 
+            id: 'h3', 
+            name: 'Workout', 
+            category: 'Fitness', 
+            priority: 'High', 
+            icon: '💪', 
+            target: 1, 
+            unit: 'workout', 
+            notes: '30 mins cardio', 
+            schedule: 'daily', 
+            history: { [getTodayKey()]: true },
+            createdAt: new Date().toISOString()
+          },
+          { 
+            id: 'h4', 
+            name: 'Journal', 
+            category: 'Productivity', 
+            priority: 'Medium', 
+            icon: '✍️', 
+            target: 1, 
+            unit: 'entry', 
+            notes: 'Reflect on achievements', 
+            schedule: 'daily', 
+            history: { [getTodayKey()]: false },
+            createdAt: new Date().toISOString()
+          }
         ];
       });
-      const [xp, setXp] = useState(() => parseInt(localStorage.getItem('nexus_xp')||'0'));
-      const [pomodoroSessions, setPomodoroSessions] = useState(() => parseInt(localStorage.getItem('nexus_pomo')||'0'));
+      
+      const [xp, setXp] = useState(() => parseInt(localStorage.getItem('nexus_xp') || '0'));
+      const [pomodoroSessions, setPomodoroSessions] = useState(() => parseInt(localStorage.getItem('nexus_pomo') || '0'));
       const [activeSidebar, setActiveSidebar] = useState('Dashboard');
-      const [theme, setTheme] = useState('dark');
       const [searchTerm, setSearchTerm] = useState('');
       const [filterCategory, setFilterCategory] = useState('All');
-      const [notifications, setNotifications] = useState(true);
+      const [notificationsEnabled, setNotificationsEnabled] = useState(true);
       const [soundEnabled, setSoundEnabled] = useState(true);
-      const [user, setUser] = useState({ name: 'Alex', avatar: '🌟', level: 1 });
       
-      // Persist
-      useEffect(() => { localStorage.setItem('nexus_habits', JSON.stringify(habits)); }, [habits]);
-      useEffect(() => { localStorage.setItem('nexus_xp', xp); }, [xp]);
-      useEffect(() => { localStorage.setItem('nexus_pomo', pomodoroSessions); }, [pomodoroSessions]);
+      // Persist data
+      useEffect(() => {
+        localStorage.setItem('nexus_habits', JSON.stringify(habits));
+      }, [habits]);
       
-      // Compute global stats for achievements and XP gains
+      useEffect(() => {
+        localStorage.setItem('nexus_xp', xp);
+      }, [xp]);
+      
+      useEffect(() => {
+        localStorage.setItem('nexus_pomo', pomodoroSessions);
+      }, [pomodoroSessions]);
+      
+      // Habit CRUD Operations
       const completeHabit = (id) => {
         setHabits(prev => prev.map(h => {
-          if(h.id === id && !h.history[getTodayKey()]) {
+          if (h.id === id && !h.history[getTodayKey()]) {
             const newHistory = { ...h.history, [getTodayKey()]: true };
-            const xpGain = 10 + (h.priority === 'High' ? 5 : 0);
+            const xpGain = 10 + (h.priority === 'High' ? 5 : h.priority === 'Medium' ? 3 : 1);
             setXp(old => old + xpGain);
-            // Confetti on milestone
+            
+            // Check for milestone
             const newStreak = computeStreak(newHistory);
-            if(newStreak === 7 || newStreak === 30) canvasConfetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10B981', '#34D399'] });
+            if (newStreak === 7 || newStreak === 30 || newStreak === 100) {
+              canvasConfetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#10B981', '#34D399', '#059669']
+              });
+              
+              if (notificationsEnabled && Notification.permission === 'granted') {
+                new Notification(`🎉 ${newStreak} Day Streak!`, {
+                  body: `Amazing consistency on ${h.name}! Keep going!`
+                });
+              }
+            }
+            
             return { ...h, history: newHistory };
           }
           return h;
         }));
       };
       
-      const computeStreak = (history) => {
-        let streak = 0; let check = new Date();
-        while(true) {
-          const d = check.toISOString().slice(0,10);
-          if(history[d] === true) streak++;
-          else if(history[d] === false && d === getTodayKey()) break;
-          else if(!history[d] && d !== getTodayKey()) break;
-          else if(history[d] === false) break;
-          check.setDate(check.getDate()-1);
-          if(streak>500) break;
-        }
-        return streak;
+      const addHabit = (habit) => {
+        setHabits(prev => [...prev, {
+          ...habit,
+          id: Date.now().toString(),
+          history: {},
+          createdAt: new Date().toISOString()
+        }]);
       };
       
-      const getBestStreak = (habit) => { let curr=0,best=0; Object.keys(habit.history).sort().forEach(d => { if(habit.history[d]) { curr++; best=Math.max(best,curr); } else curr=0; }); return best; };
+      const deleteHabit = (id) => {
+        if (window.confirm('Delete this habit? Progress will be lost.')) {
+          setHabits(prev => prev.filter(h => h.id !== id));
+        }
+      };
       
-      const addHabit = (habit) => setHabits(prev => [...prev, { ...habit, id: Date.now().toString(), history: {}, order: prev.length }]);
-      const deleteHabit = (id) => setHabits(prev => prev.filter(h => h.id !== id));
+      const updateHabit = (id, updates) => {
+        setHabits(prev => prev.map(h => h.id === id ? { ...h, ...updates } : h));
+      };
       
-      const filteredHabits = habits.filter(h => h.name.toLowerCase().includes(searchTerm.toLowerCase()) && (filterCategory === 'All' || h.category === filterCategory));
+      // Filtered habits
+      const filteredHabits = habits.filter(h => 
+        h.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (filterCategory === 'All' || h.category === filterCategory)
+      );
       
-      // Heatmap data
-      const heatmapData = getDaysArray(90).map(date => ({ date, count: habits.filter(h => h.history[date] === true).length }));
+      // Analytics data
+      const heatmapData = getDaysArray(90).map(date => ({
+        date,
+        count: habits.filter(h => h.history[date] === true).length
+      }));
       
-      // AI Coach message
-      const aiMessage = generateAIInsight(habits, 0);
+      const completionRate = habits.length 
+        ? (habits.filter(h => h.history[getTodayKey()] === true).length / habits.length) * 100 
+        : 0;
+      
       const levelInfo = getLevelFromXP(xp);
-      const completionRate = habits.length ? (habits.filter(h => h.history[getTodayKey()] === true).length / habits.length) * 100 : 0;
+      const aiMessage = generateAIInsight(habits);
+      const bestStreakOverall = Math.max(...habits.map(h => getBestStreak(h)), 0);
       
-      // Sidebar navigation
-      const navItems = [{ id:'Dashboard', icon:'fa-chart-line'},{ id:'Habits', icon:'fa-check-circle'},{ id:'Analytics', icon:'fa-chart-simple'},{ id:'Focus Mode', icon:'fa-clock'},{ id:'Achievements', icon:'fa-award'},{ id:'Settings', icon:'fa-sliders-h'}];
+      // Request notification permission
+      useEffect(() => {
+        if (notificationsEnabled && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+      }, [notificationsEnabled]);
+      
+      // Navigation items
+      const navItems = [
+        { id: 'Dashboard', icon: 'fa-chart-line', label: 'Dashboard' },
+        { id: 'Habits', icon: 'fa-check-circle', label: 'Habits' },
+        { id: 'Analytics', icon: 'fa-chart-simple', label: 'Analytics' },
+        { id: 'Focus Mode', icon: 'fa-clock', label: 'Focus' },
+        { id: 'Achievements', icon: 'fa-award', label: 'Achievements' },
+        { id: 'Settings', icon: 'fa-sliders-h', label: 'Settings' }
+      ];
       
       return (
         <div className="relative min-h-screen text-white">
-          <div className="floating-bg"><div style={{top:'10%',left:'20%',width:'300px',height:'300px',animationDelay:'0s'}}></div><div style={{top:'60%',left:'70%',width:'400px',height:'400px',animationDelay:'5s'}}></div><div style={{top:'30%',left:'80%',width:'250px',height:'250px',animationDelay:'2s'}}></div></div>
+          {/* Animated Background */}
+          <div className="floating-bg">
+            <div style={{ top: '10%', left: '20%', width: '300px', height: '300px', animationDelay: '0s' }}></div>
+            <div style={{ top: '60%', left: '70%', width: '400px', height: '400px', animationDelay: '5s' }}></div>
+            <div style={{ top: '30%', left: '80%', width: '250px', height: '250px', animationDelay: '2s' }}></div>
+            <div style={{ top: '70%', left: '10%', width: '350px', height: '350px', animationDelay: '7s' }}></div>
+          </div>
+          
           <div className="flex flex-col md:flex-row relative z-10">
             {/* Desktop Sidebar */}
-            <motion.aside initial={{x:-100,opacity:0}} animate={{x:0,opacity:1}} className="hidden md:flex flex-col w-72 glass-premium m-4 rounded-3xl h-[96vh] sticky top-4 p-6 border border-white/10">
-              <div className="flex items-center gap-3 mb-10"><i className="fas fa-crown text-emerald-400 text-2xl"></i><h1 className="text-2xl font-bold bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent">Nexus Habit</h1></div>
-              <div className="flex-1 space-y-2">
-                {navItems.map(item => (<button key={item.id} onClick={() => setActiveSidebar(item.id)} className={`w-full flex items-center gap-4 px-5 py-3 rounded-xl transition-all ${activeSidebar===item.id ? 'bg-emerald-600/30 text-emerald-400 border-l-4 border-emerald-400' : 'hover:bg-white/5 text-gray-300'}`}><i className={`fas ${item.icon} w-5`}></i><span>{item.id}</span></button>))}
+            <motion.aside 
+              initial={{ x: -100, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              transition={{ duration: 0.5 }}
+              className="hidden md:flex flex-col w-72 glass-premium m-4 rounded-3xl h-[96vh] sticky top-4 p-6 border border-white/10"
+            >
+              <div className="flex items-center gap-3 mb-10">
+                <i className="fas fa-crown text-emerald-400 text-2xl"></i>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent">
+                  Nexus Habit
+                </h1>
               </div>
-              <div className="pt-6 border-t border-white/10 mt-4"><div className="bg-emerald-900/30 p-4 rounded-2xl"><div className="flex justify-between text-sm"><span>Level {levelInfo.level}</span><span>{xp} XP</span></div><div className="h-2 bg-gray-700 rounded-full mt-2 overflow-hidden"><div className="bg-emerald-400 h-full rounded-full" style={{width:`${levelInfo.next ? (xp/levelInfo.next)*100 : 100}%`}}></div></div><p className="text-xs text-gray-300 mt-2">{levelInfo.name}</p></div></div>
+              
+              <div className="flex-1 space-y-2">
+                {navItems.map(item => (
+                  <motion.button
+                    key={item.id}
+                    whileHover={{ x: 5 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setActiveSidebar(item.id)}
+                    className={`w-full flex items-center gap-4 px-5 py-3 rounded-xl transition-all ${
+                      activeSidebar === item.id 
+                        ? 'bg-emerald-600/30 text-emerald-400 border-l-4 border-emerald-400' 
+                        : 'hover:bg-white/5 text-gray-300'
+                    }`}
+                  >
+                    <i className={`fas ${item.icon} w-5`}></i>
+                    <span>{item.label}</span>
+                  </motion.button>
+                ))}
+              </div>
+              
+              {/* XP & Level Card */}
+              <div className="pt-6 border-t border-white/10 mt-4">
+                <div className="bg-gradient-to-br from-emerald-900/40 to-emerald-800/20 p-4 rounded-2xl">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm">{levelInfo.icon} Level {levelInfo.level}</span>
+                    <span className="text-sm font-semibold text-emerald-400">{xp} XP</span>
+                  </div>
+                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <motion.div 
+                      className="bg-gradient-to-r from-emerald-400 to-emerald-300 h-full rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${levelInfo.next ? (xp / levelInfo.next) * 100 : 100}%` }}
+                      transition={{ duration: 0.5 }}
+                    ></motion.div>
+                  </div>
+                  <p className="text-xs text-gray-300 mt-2">{levelInfo.name}</p>
+                </div>
+              </div>
             </motion.aside>
-            {/* Main Content */}
+            
+            {/* Main Content Area */}
             <main className="flex-1 p-4 md:p-8 pb-24">
               <AnimatePresence mode="wait">
-                <motion.div key={activeSidebar} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} transition={{duration:0.3}}>
-                  {activeSidebar === 'Dashboard' && <DashboardView habits={habits} completionRate={completionRate} xp={xp} levelInfo={levelInfo} aiMessage={aiMessage} pomodoroSessions={pomodoroSessions} heatmapData={heatmapData} />}
-                  {activeSidebar === 'Habits' && <HabitsView habits={filteredHabits} searchTerm={searchTerm} setSearchTerm={setSearchTerm} filterCategory={filterCategory} setFilterCategory={setFilterCategory} onComplete={completeHabit} onDelete={deleteHabit} onAdd={addHabit} categories={['All','Fitness','Study','Health','Spiritual','Productivity','Finance']} />}
-                  {activeSidebar === 'Analytics' && <AnalyticsView habits={habits} heatmapData={heatmapData} />}
-                  {activeSidebar === 'Focus Mode' && <FocusModeView pomodoroSessions={pomodoroSessions} setPomodoroSessions={setPomodoroSessions} soundEnabled={soundEnabled} />}
-                  {activeSidebar === 'Achievements' && <AchievementsView xp={xp} habits={habits} pomodoroSessions={pomodoroSessions} />}
-                  {activeSidebar === 'Settings' && <SettingsView setTheme={setTheme} notifications={notifications} setNotifications={setNotifications} soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled} resetData={()=>{localStorage.clear(); window.location.reload();}} exportData={()=>{const data={habits,xp,pomodoroSessions};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)]));a.download='nexus_backup.json';a.click();}} />}
-                </motion.div>
-              </AnimatePresence>
-            </main>
-          </div>
-          {/* Mobile Bottom Navigation */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 z-50 flex justify-around p-3">
-            {navItems.map(item => (<button key={item.id} onClick={() => setActiveSidebar(item.id)} className={`p-3 rounded-full ${activeSidebar===item.id ? 'text-emerald-400 bg-emerald-500/20' : 'text-gray-400'}`}><i className={`fas ${item.icon} text-xl`}></i></button>))}
-          </div>
-        </div>
-      );
-    };
-    
-    // Dashboard View
-    const DashboardView = ({ habits, completionRate, xp, levelInfo, aiMessage, pomodoroSessions, heatmapData }) => {
-      const totalStreakBest = Math.max(...habits.map(h => { let b=0,c=0; Object.values(h.history).forEach(v=>{if(v){c++;b=Math.max(b,c);}else c=0;}); return b; }),0);
-      return (<div className="space-y-8"><div className="grid grid-cols-1 md:grid-cols-4 gap-5"><StatCard icon="fa-calendar-check" label="Today's Progress" value={`${Math.round(completionRate)}%`} color="emerald"/><StatCard icon="fa-fire" label="Best Streak" value={`${totalStreakBest} days`} color="orange"/><StatCard icon="fa-star" label="Level" value={levelInfo.name} color="purple"/><StatCard icon="fa-clock" label="Focus Sessions" value={pomodoroSessions} color="blue"/></div><div className="glass-premium rounded-3xl p-6"><div className="flex justify-between items-center mb-4"><h2 className="text-xl font-semibold">✨ AI Coach Insight</h2><i className="fas fa-robot text-emerald-400"></i></div><p className="text-gray-200 text-lg">{aiMessage}</p></div><div className="glass-premium rounded-3xl p-6"><h3 className="font-semibold mb-3">🔥 Top Habits by Streak</h3><div className="space-y-3">{habits.slice(0,3).map(h => { const strk = (()=>{let s=0,d=new Date();while(true){const key=d.toISOString().slice(0,10);if(h.history[key]===true)s++;else break;d.setDate(d.getDate()-1);}return s;})(); return (<div key={h.id} className="flex justify-between"><span>{h.icon} {h.name}</span><span className="text-emerald-400">{strk} day streak</span></div>);})}</div></div><div className="glass-premium rounded-3xl p-6"><h3>📅 Consistency Heatmap (Last 90d)</h3><div className="grid grid-cols-15 gap-1 mt-4 overflow-x-auto">{heatmapData.slice(-90).map((day,i)=> (<div key={i} className="w-3 h-3 rounded-sm" style={{backgroundColor: day.count===0 ? '#1f1f2a' : day.count>2 ? '#10B981' : '#34D399', opacity: day.count/4+0.3}} title={`${day.date}: ${day.count} habits`}></div>))}</div></div></div>);
-    };
-    const StatCard = ({ icon, label, value, color }) => (<div className="glass-premium p-5 rounded-2xl"><i className={`fas ${icon} text-${color}-400 text-2xl mb-2`}></i><p className="text-gray-400 text-sm">{label}</p><p className="text-2xl font-bold text-white">{value}</p></div>);
-    
-    // Habits View with Drag & Drop, Search, Filter
-    const HabitsView = ({ habits, searchTerm, setSearchTerm, filterCategory, setFilterCategory, onComplete, onDelete, onAdd, categories }) => {
-      const [showForm, setShowForm] = useState(false);
-      const [newHabit, setNewHabit] = useState({ name:'', category:'Health', priority:'Medium', icon:'⭐', schedule:'daily' });
-      const handleSubmit = () => { if(newHabit.name.trim()){ onAdd(newHabit); setShowForm(false); setNewHabit({ name:'', category:'Health', priority:'Medium', icon:'⭐', schedule:'daily' }); } };
-      return (<div><div className="flex flex-wrap justify-between gap-4 mb-6"><div className="flex gap-3"><div className="bg-[#1E1E2A] rounded-xl p-2"><i className="fas fa-search text-gray-400"></i><input type="text" placeholder="Search habits..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="bg-transparent outline-none px-2 text-white w-40"/></div><select value={filterCategory} onChange={e=>setFilterCategory(e.target.value)} className="bg-[#1E1E2A] rounded-xl px-4 text-white"><option>All</option><option>Fitness</option><option>Study</option><option>Health</option><option>Spiritual</option><option>Productivity</option><option>Finance</option></select></div><motion.button whileHover={{scale:1.05}} onClick={()=>setShowForm(true)} className="bg-emerald-600 px-5 py-2 rounded-xl"><i className="fas fa-plus"></i> New Habit</motion.button></div><div className="grid grid-cols-1 md:grid-cols-2 gap-5">{habits.map(habit => (<HabitCardPremium key={habit.id} habit={habit} onComplete={onComplete} onDelete={onDelete} />))}</div><AnimatePresence>{showForm && (<motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"><div className="glass-premium p-6 rounded-3xl w-96"><h3 className="text-xl mb-4">Create Premium Habit</h3><input placeholder="Name" className="w-full bg-black/40 p-3 rounded-xl mb-3" value={newHabit.name} onChange={e=>setNewHabit({...newHabit,name:e.target.value})}/><select className="w-full bg-black/40 p-3 rounded-xl mb-3" value={newHabit.category} onChange={e=>setNewHabit({...newHabit,category:e.target.value})}>{categories.slice(1).map(c=><option key={c}>{c}</option>)}</select><select className="w-full bg-black/40 p-3 rounded-xl mb-3" value={newHabit.priority} onChange={e=>setNewHabit({...newHabit,priority:e.target.value})}><option>Low</option><option>Medium</option><option>High</option></select><input placeholder="Emoji" maxLength={2} className="w-full bg-black/40 p-3 rounded-xl mb-3" value={newHabit.icon} onChange={e=>setNewHabit({...newHabit,icon:e.target.value})}/><div className="flex gap-3"><button onClick={handleSubmit} className="bg-emerald-600 flex-1 py-2 rounded-xl">Add</button><button onClick={()=>setShowForm(false)} className="bg-gray-700 flex-1 py-2 rounded-xl">Cancel</button></div></div></motion.div>)}</AnimatePresence></div>);
-    };
-    
-    const HabitCardPremium = ({ habit, onComplete, onDelete }) => {
-      const completedToday = habit.history[getTodayKey()] === true;
-      const streak = (()=>{let s=0,d=new Date();while(true){const key=d.toISOString().slice(0,10);if(habit.history[key]===true)s++;else break;d.setDate(d.getDate()-1);}return s;})();
-      return (<motion.div whileHover={{y:-5,scale:1.01}} className="glass-premium rounded-2xl p-5 border border-white/5 transition-all"><div className="flex justify-between"><div><span className="text-3xl mr-3">{habit.icon}</span><span className="text-white text-lg font-semibold">{habit.name}</span><div className="flex gap-2 mt-1"><span className="text-emerald-400 text-xs bg-emerald-900/40 px-2 rounded-full">{habit.category}</span><span className={`text-xs px-2 rounded-full ${habit.priority==='High'?'bg-red-900/40':'bg-gray-700'}`}>{habit.priority}</span></div></div><button onClick={()=>onDelete(habit.id)} className="text-gray-500 hover:text-red-400"><i className="fas fa-trash"></i></button></div><div className="mt-3 flex justi        
+                <motion.div
+                  key={activeSidebar}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {activeSidebar === 'Dashboard' && (
+                    <Dashboard 
+                      habits={habits}
+                      completionRate={completionRate}
+                      xp={xp}
+                      levelInfo={levelInfo}
+                      aiMessage={aiMessage}
+                      pomodoroSessions={pomodoroSessions}
+                      heatmapData={heatmapData}
+                      bestStreakOverall={bestStreakOverall}
+                    />
+                  )}
+                  
+                  {activeSidebar === 'Habits' && (
+                    <HabitsView
+                      habits={filteredHabits}
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      filterCategory={filterCategory}
+                      setFilterCategory={setFilterCategory}
+                      onComplete={completeHabit}
+                      onDelete={deleteHabit}
+                      onAdd={addHabit}
+                      categories={['All', 'Fitness', 'Study', 'Health', 'Spiritual', 'Productivity', 'Finance']}
+                    />
+                  )}
+                  
+                  {activeSidebar === 'Analytics' && (
+                    <Analytics 
+                      habits={habits}
+                      heatmapData={heatmapData}
+                    />
+                  )}
+                  
+                  {activeSidebar === 'Focus Mode' && (
+                    <FocusMode
+                      pomodoroSessions={pomodoroSessions}
+                      setPomodoroSessions={setPomodoroSessions}
+                      soundEnabled={soundEnabled}
+                    />
+                  )}
+                  
+                  {activeSidebar === 'Achievements' && (
+                    <Achievements
+                      xp={xp}
+                      habits={habits}
+                      pomodoroSessions={pomodoroSessions}
+                      bestStreakOverall={bestStreakOverall}
+                    />
+                  )}
+                  
+                  {activeSidebar === 'Settings' && (
+                    <Settings
+                      notificationsEnabled={notificationsEnabled}
+                      setNotificationsEnabled={setNotificationsEnabled}
+                      soundEnabled={soundEnabled}
+                      setSoundEnabled={setSoundEnabled}
+                      onR
