@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Habit Tracker</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'matte-black': '#121212',
+                        'soft-white': '#F5F5F5',
+                        'gray-mid': '#8B8B8B',
+                        'emerald-accent': '#10B981',
+                        'card-bg': '#1E1E1E',
+                        'card-bg-light': '#FFFFFF',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        'display': ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delay': 'float 6s ease-in-out 3s infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'scale-in': 'scaleIn 0.4s ease-out',
+                        'shimmer': 'shimmer 2s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-20px) rotate(2deg)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(16,185,129,0.2)' },
+                            '100%': { boxShadow: '0 0 40px rgba(16,185,129,0.5)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(30px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Recharts CDN -->
+    <script src="https://unpkg.com/recharts@2/umd/Recharts.js">
+    </script>
+
+    <!-- React & ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js">
+    </script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js">
+    </script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js">
+    </script>
+
+    <style>
+        :root {
+            --bg: #121212;
+            --text: #F5F5F5;
+            --card: #1E1E1E;
+            --accent: #10B981;
+            --gray: #8B8B8B;
+            --border: rgba(255, 255, 255, 0.06);
+        }
+
+        .light {
+            --bg: #F8FAFC;
+            --text: #1a1a1a;
+            --card: #FFFFFF;
+            --accent: #059669;
+            --gray: #64748B;
+            --border: rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 139, 139, 0.4);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 139, 139, 0.7);
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+        }
+        .light .glass {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        /* Premium card hover */
+        .premium-card {
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.03),
+                    transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+        .premium-card:hover::before {
+            left: 100%;
+        }
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+        .light .premium-card:hover {
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Circular progress */
+        .circular-progress {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        /* Animated gradient border */
+        .gradient-border {
+            position: relative;
+            border-radius: 20px;
+        }
+        .gradient-border::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 21px;
+            padding: 1px;
+            background: linear-gradient(135deg, #10B981, #34D399, #10B981);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 0;
+        }
+        .gradient-border:hover::after {
+            opacity: 1;
+        }
+
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.04) 25%,
+                    rgba(255, 255, 255, 0.08) 50%,
+                    rgba(255, 255, 255, 0.04) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
+            border-radius: 8px;
+        }
+
+        /* Floating glow orb */
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.15;
+            transition: opacity 0.5s ease;
+        }
+        .light .glow-orb {
+            opacity: 0.08;
+        }
+
+        /* Pulse ring for timer */
+        .pulse-ring {
+            animation: pulseRing 2s ease-out infinite;
+        }
+        @keyframes pulseRing {
+            0% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* Achievement badge */
+        .badge-glow {
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+        }
+        .badge-locked {
+            filter: grayscale(1);
+            opacity: 0.5;
+        }
+
+        /* Responsive font scaling */
+        @media (max-width: 640px) {
+            .hero-title {
+                font-size: 2rem;
+                line-height: 1.2;
+            }
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+        }
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .hero-title {
+                font-size: 2.8rem;
+            }
+        }
+        @media (min-width: 1025px) {
+            .hero-title {
+                font-size: 3.8rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen antialiased">
+
+    <div id="root"></div>
+
+    <!-- Floating Glow Orbs -->
+    <div class="glow-orb w-72 h-72 bg-emerald-500/20 top-20 -left-20" style="animation: float 8s ease-in-out infinite;"></div>
+    <div class="glow-orb w-96 h-96 bg-emerald-400/15 bottom-20 -right-32" style="animation: float 10s ease-in-out 2s infinite;"></div>
+    <div class="glow-orb w-48 h-48 bg-teal-400/10 top-1/2 left-1/3" style="animation: float 7s ease-in-out 4s infinite;"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext } = React;
+        const {
+            BarChart,
+            Bar,
+            XAxis,
+            YAxis,
+            CartesianGrid,
+            Tooltip,
+            ResponsiveContainer,
+            PieChart,
+            Pie,
+            Cell,
+            LineChart,
+            Line,
+            AreaChart,
+            Area,
+            Legend
+        } = Recharts;
+
+        // ==================== CONTEXT ====================
+        const AppContext = createContext();
+
+        // ==================== UTILS ====================
+        const STORAGE_KEY = 'premium_habit_tracker_data';
+
+        const defaultData = {
+            habits: [{
+                id: 'demo-1',
+                name: 'Morning Meditation',
+                category: 'Spiritual',
+                dailyGoal: 1,
+                icon: '🧘',
+                priority: 'high',
+                notes: 'Start the day with clarity',
+                createdAt: new Date().toISOString(),
+                completions: {},
+                streak: 12,
+                bestStreak: 18,
+                totalCompletions: 45,
+            }, {
+                id: 'demo-2',
+                name: 'Read 30 Minutes',
+                category: 'Learning',
+                dailyGoal: 1,
+                icon: '📚',
+                priority: 'medium',
+                notes: 'Expand knowledge daily',
+                createdAt: new Date().toISOString(),
+                completions: {},
+                streak: 5,
+                bestStreak: 14,
+                totalCompletions: 32,
+            }, {
+                id: 'demo-3',
+                name: 'Exercise',
+                category: 'Fitness',
+                dailyGoal: 1,
+                icon: '💪',
+                priority: 'high',
+                notes: 'Stay fit and healthy',
+                createdAt: new Date().toISOString(),
+                completions: {},
+                streak: 21,
+                bestStreak: 30,
+                totalCompletions: 67,
+            }, {
+                id: 'demo-4',
+                name: 'Drink 8 Glasses Water',
+                category: 'Health',
+                dailyGoal: 8,
+                icon: '💧',
+                priority: 'medium',
+                notes: 'Stay hydrated throughout the day',
+                createdAt: new Date().toISOString(),
+                completions: {},
+                streak: 3,
+                bestStreak: 10,
+                totalCompletions: 28,
+            }, ],
+            settings: {
+                theme: 'dark',
+                notifications: true,
+                pomodoroFocus: 25,
+                pomodoroShortBreak: 5,
+                pomodoroLongBreak: 15,
+            },
+            achievements: [],
+            pomodoroSessions: 0,
+            lastActiveDate: new Date().toDateString(),
+        };
+
+        const loadData = () => {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return { ...defaultData, ...parsed, habits: parsed.habits || defaultData.habits };
+                }
+            } catch (e) {
+                console.warn('Failed to load data, using defaults');
+            }
+            return { ...defaultData };
+        };
+
+        const saveData = (data) => {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.warn('Failed to save data');
+            }
+        };
+
+        const today = new Date().toDateString();
+
+        const motivationalQuotes = [
+            { text: "Discipline creates freedom.", author: "Jocko Willink" },
+            { text: "Small habits create big results.", author: "James Clear" },
+            { text: "Consistency beats motivation.", author: "Unknown" },
+            { text: "You do not rise to the level of your goals. You fall to the level of your systems.",
+                author: "James Clear" },
+            { text: "The secret of your future is hidden in your daily routine.", author: "Mike Murdock" },
+            { text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
+            { text: "Motivation is what gets you started. Habit is what keeps you going.", author: "Jim Ryun" },
+            { text: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+            author: "Aristotle" },
+        ];
+
+        const categoryColors = {
+            Health: { bg: 'bg-rose-500/20', text: 'text-rose-400', border: 'border-rose-500/30' },
+            Fitness: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
+            Learning: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+            Spiritual: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+            Productivity: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30' },
+            'Personal Growth': { bg: 'bg-teal-500/20', text: 'text-teal-400', border: 'border-teal-500/30' },
+        };
+
+        const emojiOptions = ['🧘', '📚', '💪', '💧', '🏃', '🎯', '✍️', '🧠', '🌱', '💤', '🥗', '🚶', '🎵', '🙏', '💻', '📝'];
+
+        // ==================== HOOKS ====================
+        const useLocalStorage = (key, initialValue) => {
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : initialValue;
+                } catch (e) {
+                    return initialValue;
+                }
+            });
+
+            const setValue = useCallback((value) => {
+                const valueToStore = value instanceof Function ? value(storedValue) : value;
+                setStoredValue(valueToStore);
+                localStorage.setItem(key, JSON.stringify(valueToStore));
+            }, [key, storedValue]);
+
+            return [storedValue, setValue];
+        };
+
+        // ==================== COMPONENTS ====================
+
+        // Loading Screen
+        const LoadingScreen = ({ onComplete }) => {
+            const [progress, setProgress] = useState(0);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setProgress(p => {
+                        if (p >= 100) {
+                            clearInterval(interval);
+                            setTimeout(onComplete, 300);
+                            return 100;
+                        }
+                        return p + Math.random() * 15 + 2;
+                    });
+                }, 80);
+                return () => clearInterval(interval);
+            }, [onComplete]);
+
+            return (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-matte-black dark:bg-matte-black light:bg-gray-50 transition-colors duration-500">
+                    <div className="relative mb-8">
+                        <div className="w-20 h-20 rounded-2xl bg-emerald-accent/20 flex items-center justify-center animate-glow">
+                            <span className="text-4xl">🔥</span>
+                        </div>
+                        <div className="absolute -inset-3 rounded-2xl border-2 border-emerald-accent/30 animate-ping"></div>
+                    </div>
+                    <h1 className="text-3xl font-display font-bold text-soft-white dark:text-soft-white light:text-gray-900 mb-2">
+                        Premium Habit Tracker
+                    </h1>
+                    <p className="text-gray-mid mb-6 text-sm">Loading your dashboard...</p>
+                    <div className="w-64 h-1.5 bg-card-bg dark:bg-card-bg light:bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-emerald-accent to-teal-400 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${Math.min(progress, 100)}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-xs text-gray-mid mt-3">{Math.round(Math.min(progress, 100))}%</span>
+                </div>
+            );
+        };
+
+        // Navbar
+        const Navbar = ({ darkMode, toggleDarkMode, activeSection, scrollToSection }) => {
+            const [mobileOpen, setMobileOpen] = useState(false);
+            const [scrolled, setScrolled] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 20);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const navItems = [
+                { id: 'hero', label: 'Home', icon: '🏠' },
+                { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+                { id: 'analytics', label: 'Analytics', icon: '📈' },
+                { id: 'pomodoro', label: 'Focus', icon: '⏱️' },
+                { id: 'achievements', label: 'Badges', icon: '🏆' },
+                { id: 'settings', label: 'Settings', icon: '⚙️' },
+            ];
+
+            return (
+                <nav
+                    className={`fixed top-0 left-0 right-0 z-40 transition-all duration-400 ${
+                        scrolled ? 'glass shadow-lg' : 'bg-transparent'
+                    }`}
+                >
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between h-16 md:h-18">
+                            {/* Logo */}
+                            <button
+                                onClick={() => scrollToSection('hero')}
+                                className="flex items-center gap-2.5 group cursor-pointer bg-transparent border-none"
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-emerald-accent/15 flex items-center justify-center group-hover:bg-emerald-accent/25 transition-all duration-300">
+                                    <span className="text-lg">🔥</span>
+                                </div>
+                                <span className="font-display font-bold text-base md:text-lg text-soft-white dark:text-soft-white light:text-gray-900 tracking-tight">
+                                    Premium<span class
